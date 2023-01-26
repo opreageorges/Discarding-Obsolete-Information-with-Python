@@ -1,0 +1,6 @@
+mongodb://localhost:42069/
+mongodb://localhost:42070/
+mongodb://localhost:42071/
+# Este un fisier de exemplu
+# Nu il actualizati pe git
+# Puteti adauga oricate siruri de conexiune catre baze de date
