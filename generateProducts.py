@@ -3,7 +3,7 @@ import random
 from bson import ObjectId
 import datetime
 
-f = open("./MongoDBConnectionStrings", "r")
+f = open("MiscFiles/MongoDBConnectionStrings", "r")
 strings = f.read()
 f.close()
 conStrings = strings.split("\n")
@@ -29,7 +29,7 @@ availableDeposit = ["Grozavesti1", "Grozavesti2", "Bragadiru1", "Pitesti1", "Bai
 for elem in availableDeposit:
     for dbP, dbInd in zip(dataBasesProducts, dataBasesUpdateIndex):
         dbP.delete_many({"Deposit": elem})
-        dbInd.delete_many({"Name": ""})
+        dbInd.delete_many({"Version": {"$gt": -1}})
 
 database_ready_elems = []
 for elem in availableProducts:
@@ -43,6 +43,6 @@ for elem in availableProducts:
                                 )
 for dbP, dbInd in zip(dataBasesProducts, dataBasesUpdateIndex):
     dbP.insert_many(database_ready_elems)
-    dbInd.insert_one({"Name": "Self", "Version": 1})
+    dbInd.insert_one({"Version": 1, "Description": "Initialization", "Updated": []})
 
     dbP.database.client.close()
