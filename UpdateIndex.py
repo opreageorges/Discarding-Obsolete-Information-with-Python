@@ -6,9 +6,9 @@ from Product import Product
 
 @dataclass
 class UpdateIndex:
-    Version: int
-    Description: str
-    Updated: [Product]
+    version: int
+    description: str
+    updated: [Product]
 
     # def toDict(self) -> {}:
     #     return {

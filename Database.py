@@ -8,6 +8,8 @@ from pymongo.database import Collection as MongoCollection
 from Product import Product
 from UpdateIndex import UpdateIndex
 
+# Clasa care se ocupa de interactiunea cu baza de date
+
 
 class Database:
     _con: MongoClient
@@ -18,9 +20,9 @@ class Database:
     def __init__(self, connectionString: str) -> None:
         super().__init__()
         self._con = MongoClient(connectionString)
-        self._stock = self._con["Stock"]
-        self._updates = self._stock["UpdateIndex"]
-        self._products = self._stock["Products"]
+        self._stock = self._con["stock"]
+        self._updates = self._stock["updateIndex"]
+        self._products = self._stock["products"]
 
     def addProduct(self,
                    description: str or None = None,
@@ -37,12 +39,12 @@ class Database:
                 raise TypeError(r'You can add only products in the "Products" table')
 
         dictArgs = [asdict(i) for i in args]
-        self._products.insert_many(dictArgs)
+        ids = self._products.insert_many(dictArgs)
 
         maxVersion = self._updates.\
-            find({"Version": {"$gt": -1}}).\
-            sort([("Version", pymongo.DESCENDING)]).\
-            next()["Version"]
+            find({"version": {"$gt": -1}}).\
+            sort([("version", pymongo.DESCENDING)]).\
+            next()["version"]
 
         currentUpdate = UpdateIndex(maxVersion + 1, description, dictArgs)
         self._updates.insert_one(asdict(currentUpdate))
