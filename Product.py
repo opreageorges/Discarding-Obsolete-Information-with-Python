@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from random import randint
-
+from bson import ObjectId
+from typing import Optional
 # Clasa echivalenta cu datele din tabelul Produ.
 
 
@@ -12,6 +13,10 @@ class Product:
     price: int
     quantity: int
     expirationDate: datetime = datetime.now() + timedelta(seconds=randint(0, 600))
+    _id: Optional[ObjectId] = None
+
+    def getId(self):
+        return self._id
 
     # Exista fuctia asdict, care, momentan, implementeaza perfect tranformarea
     # in date compatibile cu insertul in baza de date

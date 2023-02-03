@@ -69,8 +69,10 @@ def main():
 if __name__ == "__main__":
     config = readConfigFile()
     databases: [DatabaseController] = initDataBasesConnections()
-    # [i._checkConnection() for i in databases]
-    # dummyData = [createRandomProduct() for _ in range(15)]
-    # databases[0].addProduct(*dummyData)
+    p = databases[0].getProducts({"name": "Castraveti", "warehouse":"Baicoi1"})
+    p[0].price += 100
+    databases[0].updateProducts(*p)
+    databases[0].getProducts()
+
 
 

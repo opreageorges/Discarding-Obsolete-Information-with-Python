@@ -7,6 +7,8 @@ from pymongo.database import Database as MongoDatabase
 from pymongo.database import Collection as MongoCollection
 from Product import Product
 from UpdateIndex import UpdateIndex
+from typing import Optional
+
 
 # Clasa care se ocupa de interactiunea cu baza de date
 
@@ -33,13 +35,9 @@ class DatabaseController:
         self._updates = self._stock["updateIndex"]
         self._products = self._stock["products"]
 
-    def _checkConnection(self):
-        self._con.close()
-        print(self._con.server_info())
-
-    def addProduct(self,
-                   description: str or None = None,
-                   *args):
+    def addProducts(self,
+                    description: str or None = None,
+                    *args) -> None:
 
         if description is None or not isinstance(description, str):
             description = f"Adding new products to the data base in {datetime.datetime.now()}"
@@ -54,13 +52,39 @@ class DatabaseController:
         dictArgs = [asdict(i) for i in args]
         insertResult = self._products.insert_many(dictArgs)
 
-        maxVersion = self._updates.\
-            find({"version": {"$gt": -1}}).\
-            sort([("version", pymongo.DESCENDING)]).\
+        maxVersion = self._updates. \
+            find({"version": {"$gt": -1}}). \
+            sort([("version", pymongo.DESCENDING)]). \
             next()["version"]
 
         currentUpdate = UpdateIndex(maxVersion + 1, description, insertResult.inserted_ids)
         self._updates.insert_one(asdict(currentUpdate))
+
+    def getProducts(self, getFilter: Optional[dict] = None) -> [Product]:
+        if getFilter is None:
+            getFilter = {}
+
+        cursor = self._products.find(getFilter)
+        output = []
+        for elem in cursor:
+            print(type(elem))
+            output.append(Product(**elem))
+        return output
+
+    def updateProducts(self, *args) -> None:
+        if len(args) == 0:
+            raise ValueError("You must provide at least one Product to be added")
+
+        for elem in args:
+            if not isinstance(elem, Product):
+                raise TypeError(r'You can add only products in the "Products" table')
+
+        for elem in args:
+            elem: Product
+            updateFilter = {"_id": elem.getId()}
+            updateValues = {"$set": asdict(elem)}
+            self._products.update_one(updateFilter, updateValues)
+        return
 
     def __del__(self) -> None:
         DatabaseController._allConnections.pop(self._connectionString)
