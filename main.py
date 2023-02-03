@@ -1,3 +1,4 @@
+import datetime
 from random import randint
 from Database import Database
 from Product import Product
@@ -39,7 +40,37 @@ def initDataBasesConnections() -> [Database]:
     return dataBases
 
 
+# TODO remove hardcoded stuff read from file
+def readConfigFile():
+    return {
+        "DataUpdateTimer": 60,
+        "GarbageCollectionTime": 60,
+        "DataSyncTime": datetime.datetime.now() + datetime.timedelta(minutes=1)
+    }
+
+
+def garbageCollection(gcTimer):
+    return gcTimer
+
+
+def dataSync(timeStamps):
+    return
+
+
+def dataUpdateChecker(timer):
+    return
+
+
+def main():
+    while True:
+       return
+
+
 if __name__ == "__main__":
+    config = readConfigFile()
     databases: [Database] = initDataBasesConnections()
-    dummyData = [createRandomProduct() for _ in range(15)]
-    databases[0].addProduct(*dummyData)
+    [i._checkConnection() for i in databases]
+    # dummyData = [createRandomProduct() for _ in range(15)]
+    # databases[0].addProduct(*dummyData)
+
+
