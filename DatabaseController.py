@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import asdict
-
+from bson import ObjectId
 import pymongo
 from pymongo import MongoClient
 from pymongo.database import Database as MongoDatabase
@@ -36,11 +36,11 @@ class DatabaseController:
         self._products = self._stock["products"]
 
     def addProducts(self,
-                    description: str or None = None,
+                    description: Optional[str] = None,
                     *args) -> None:
 
         if description is None or not isinstance(description, str):
-            description = f"Adding new products to the data base in {datetime.datetime.now()}"
+            description = f"Adding new products to the database in {datetime.datetime.now()}"
 
         if len(args) == 0:
             raise ValueError("You must provide at least one Product to be added")
@@ -51,14 +51,7 @@ class DatabaseController:
 
         dictArgs = [asdict(i) for i in args]
         insertResult = self._products.insert_many(dictArgs)
-
-        maxVersion = self._updates. \
-            find({"version": {"$gt": -1}}). \
-            sort([("version", pymongo.DESCENDING)]). \
-            next()["version"]
-
-        currentUpdate = UpdateIndex(maxVersion + 1, description, insertResult.inserted_ids)
-        self._updates.insert_one(asdict(currentUpdate))
+        self._createUpdate(description, insertResult.inserted_ids)
 
     def getProducts(self, getFilter: Optional[dict] = None) -> [Product]:
         if getFilter is None:
@@ -71,7 +64,7 @@ class DatabaseController:
             output.append(Product(**elem))
         return output
 
-    def updateProducts(self, *args) -> None:
+    def updateProducts(self, description: Optional[str] = None, *args) -> None:
         if len(args) == 0:
             raise ValueError("You must provide at least one Product to be added")
 
@@ -79,11 +72,53 @@ class DatabaseController:
             if not isinstance(elem, Product):
                 raise TypeError(r'You can add only products in the "Products" table')
 
+        if description is None or not isinstance(description, str):
+            description = f"Updated products to the database in {datetime.datetime.now()}"
+
+        updatedIds = []
         for elem in args:
-            elem: Product
+            updatedIds.append(elem.getId())
             updateFilter = {"_id": elem.getId()}
             updateValues = {"$set": asdict(elem)}
             self._products.update_one(updateFilter, updateValues)
+
+        self._createUpdate(description, updatedIds)
+        return
+
+    def deleteProducts(self, description: Optional[str] = None, *args) -> None:
+        if len(args) == 0:
+            raise ValueError("You must provide at least one Product to be added")
+
+        productsToRemoveIds = []
+
+        for elem in args:
+            if not isinstance(elem, Product):
+                raise TypeError(r'You can add only products in the "Products" table')
+            productsToRemoveIds.append(elem.getId())
+
+        if description is None or not isinstance(description, str):
+            description = f"Deleted products to the database in {datetime.datetime.now()}"
+
+        self._products.delete_many({"$or": [{"_id": elem} for elem in productsToRemoveIds]})
+        self._createUpdate(description, productsToRemoveIds)
+
+    def _createUpdate(self, description: Optional[str], arrayOfIds: [ObjectId]):
+        maxVersion = self._updates. \
+            find({"version": {"$gt": -1}}). \
+            sort([("version", pymongo.DESCENDING)]). \
+            next()["version"]
+
+        currentUpdate = UpdateIndex(maxVersion + 1, description, arrayOfIds)
+        self._updates.insert_one(asdict(currentUpdate))
+
+    def garbageCollection(self):
+        products = self.getProducts()
+        productsToRemove = []
+        for elem in products:
+            if (elem.expirationDate - datetime.datetime.now()).total_seconds() < 0:
+                productsToRemove.append(elem)
+        self.deleteProducts("Deleted products to the database due to a regular garbage collection cycle",
+                            productsToRemove)
         return
 
     def __del__(self) -> None:

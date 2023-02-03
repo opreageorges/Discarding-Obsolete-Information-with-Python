@@ -69,9 +69,10 @@ def main():
 if __name__ == "__main__":
     config = readConfigFile()
     databases: [DatabaseController] = initDataBasesConnections()
-    p = databases[0].getProducts({"name": "Castraveti", "warehouse":"Baicoi1"})
+    p = databases[0].getProducts({"name": "Castraveti"})
     p[0].price += 100
     databases[0].updateProducts(*p)
+    databases[0].deleteProducts(*p)
     databases[0].getProducts()
 
 
