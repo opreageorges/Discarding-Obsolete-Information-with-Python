@@ -1,6 +1,6 @@
 import datetime
 from random import randint
-from Database import Database
+from DatabaseController import DatabaseController
 from Product import Product
 
 
@@ -16,7 +16,7 @@ def createRandomProduct():
                    )
 
 
-def initDataBasesConnections() -> [Database]:
+def initDataBasesConnections() -> [DatabaseController]:
     dataBases = []
 
     f = open("MiscFiles/MongoDBConnectionStrings", "r")
@@ -32,7 +32,7 @@ def initDataBasesConnections() -> [Database]:
 
         if connectionString[0] == '#':
             continue
-        dataBases.append(Database(connectionString))
+        dataBases.append(DatabaseController(connectionString))
 
     if len(dataBases) == 0:
         raise ValueError("You did not provide any connection strings")
@@ -63,13 +63,13 @@ def dataUpdateChecker(timer):
 
 def main():
     while True:
-       return
+        return
 
 
 if __name__ == "__main__":
     config = readConfigFile()
-    databases: [Database] = initDataBasesConnections()
-    [i._checkConnection() for i in databases]
+    databases: [DatabaseController] = initDataBasesConnections()
+    # [i._checkConnection() for i in databases]
     # dummyData = [createRandomProduct() for _ in range(15)]
     # databases[0].addProduct(*dummyData)
 

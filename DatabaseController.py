@@ -1,6 +1,5 @@
 import datetime
 from dataclasses import asdict
-from typing import Type
 
 import pymongo
 from pymongo import MongoClient
@@ -12,9 +11,9 @@ from UpdateIndex import UpdateIndex
 # Clasa care se ocupa de interactiunea cu baza de date
 
 
-class Database:
+class DatabaseController:
     _allConnections = {}
-
+    _connectionString: str
     _con: MongoClient
     _stock: MongoDatabase
     _products: MongoCollection
@@ -27,7 +26,8 @@ class Database:
 
     def __init__(self, connectionString: str) -> None:
         super().__init__()
-        Database._allConnections[connectionString] = self
+        DatabaseController._allConnections[connectionString] = self
+        self._connectionString = connectionString
         self._con = MongoClient(connectionString)
         self._stock = self._con["stock"]
         self._updates = self._stock["updateIndex"]
@@ -61,3 +61,8 @@ class Database:
 
         currentUpdate = UpdateIndex(maxVersion + 1, description, insertResult.inserted_ids)
         self._updates.insert_one(asdict(currentUpdate))
+
+    def __del__(self) -> None:
+        DatabaseController._allConnections.pop(self._connectionString)
+        self._con.close()
+        return
