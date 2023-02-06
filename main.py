@@ -1,7 +1,13 @@
-import datetime
+import threading
+import time
 from random import randint
 from DatabaseController import DatabaseController
-from Product import Product
+from Models.Product import Product
+
+stopThreads = threading.Event()
+garbageCollectingActive = threading.Event()
+dataSyncingActive = threading.Event()
+dataUpdateCheckingActive = threading.Event()
 
 
 def createRandomProduct():
@@ -17,7 +23,7 @@ def createRandomProduct():
 
 
 def initDataBasesConnections() -> [DatabaseController]:
-    dataBases = []
+    databases = []
 
     f = open("MiscFiles/MongoDBConnectionStrings", "r")
     fileContent = f.read()
@@ -32,12 +38,12 @@ def initDataBasesConnections() -> [DatabaseController]:
 
         if connectionString[0] == '#':
             continue
-        dataBases.append(DatabaseController(connectionString))
+        databases.append(DatabaseController(connectionString))
 
-    if len(dataBases) == 0:
+    if len(databases) == 0:
         raise ValueError("You did not provide any connection strings")
 
-    return dataBases
+    return databases
 
 
 # TODO remove hardcoded stuff read from file
@@ -45,35 +51,77 @@ def readConfigFile():
     return {
         "DataUpdateTimer": 60,
         "GarbageCollectionTime": 60,
-        "DataSyncTime": datetime.datetime.now() + datetime.timedelta(minutes=1)
+        "DataSyncTimer": 65
     }
 
 
-def garbageCollection(gcTimer):
-    return gcTimer
+def garbageCollection(garbageCollectionTimer, databases: [DatabaseController]):
+    while not stopThreads.is_set():
+
+        while dataSyncingActive.is_set() or dataUpdateCheckingActive.is_set():
+            time.sleep(10)
+
+        garbageCollectingActive.set()
+        for db in databases:
+            db.garbageCollection()
+        garbageCollectingActive.clear()
+        time.sleep(garbageCollectionTimer)
 
 
-def dataSync(timeStamps):
-    return
+def dataSync(dataSyncTimer):
+    while not stopThreads.is_set():
+
+        while garbageCollectingActive.is_set() or dataUpdateCheckingActive.is_set():
+            time.sleep(10)
+
+        dataSyncingActive.set()
+        DatabaseController.syncAllDatabases()
+        dataSyncingActive.clear()
+
+        time.sleep(dataSyncTimer)
 
 
-def dataUpdateChecker(timer):
+def dataUpdateChecker(dataUpdateTimer):
+    while not stopThreads.is_set():
+        while dataSyncingActive.is_set() or garbageCollectingActive.is_set():
+            time.sleep(10)
+
+        dataUpdateCheckingActive.set()
+        DatabaseController.syncAllDatabases()
+        dataUpdateCheckingActive.clear()
+
+        time.sleep(dataUpdateTimer)
     return
 
 
 def main():
+    config = readConfigFile()
+    threadsList = []
+    databases: [DatabaseController] = initDataBasesConnections()
+
+    threadsList.append(threading.Thread(target=garbageCollection,
+                                        args=(config["GarbageCollectionTime"], databases),
+                                        daemon=True))
+
+    threadsList.append(threading.Thread(target=dataSync,
+                                        args=(config["DataSyncTimer"],),
+                                        daemon=True))
+    # TODO
+    # threadsList.append(threading.Thread(target=dataUpdateChecker,
+    #                                     args=(config["DataUpdateTimer"], databases),
+    #                                     daemon=True))
+
+    for t in threadsList:
+        t.start()
+    # p = [createRandomProduct(), createRandomProduct(), createRandomProduct(), createRandomProduct(),
+    #      createRandomProduct(), createRandomProduct()]
+    # databases[0].addProducts("test", *p)
     while True:
-        return
+        cmd = input(">").strip()
+        if cmd == "stop":
+            break
+    # stopThreads.set()
 
 
 if __name__ == "__main__":
-    config = readConfigFile()
-    databases: [DatabaseController] = initDataBasesConnections()
-    p = databases[0].getProducts({"name": "Castraveti"})
-    p[0].price += 100
-    databases[0].updateProducts(*p)
-    databases[0].deleteProducts(*p)
-    databases[0].getProducts()
-
-
-
+    main()

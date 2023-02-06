@@ -18,13 +18,15 @@ class Product:
     def getId(self):
         return self._id
 
-    # Exista fuctia asdict, care, momentan, implementeaza perfect tranformarea
-    # in date compatibile cu insertul in baza de date
-    # def toDict(self) -> {}:
-    #     return {
-    #         "Name": self.name,
-    #         "Warehouse": self.warehouse,
-    #         "Price": self.price,
-    #         "Quantity": self.quantity,
-    #         "ExpirationDate": self.expirationDate,
-    #     }
+    def toDict(self) -> {}:
+        out = {
+            "name": self.name,
+            "warehouse": self.warehouse,
+            "price": self.price,
+            "quantity": self.quantity,
+            "expirationDate": self.expirationDate,
+        }
+        if self._id is not None:
+            out["_id"] = self._id
+
+        return out
