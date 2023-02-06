@@ -1,0 +1,5 @@
+{
+        "DataUpdateTimer": 60,
+        "GarbageCollectionTime": 60,
+        "DataSyncTimer": 65
+}

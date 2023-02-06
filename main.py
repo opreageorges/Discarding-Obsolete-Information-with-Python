@@ -1,5 +1,6 @@
 import threading
 import time
+import json
 from random import randint
 from DatabaseController import DatabaseController
 from Models.Product import Product
@@ -48,11 +49,10 @@ def initDataBasesConnections() -> [DatabaseController]:
 
 # TODO remove hardcoded stuff read from file
 def readConfigFile():
-    return {
-        "DataUpdateTimer": 60,
-        "GarbageCollectionTime": 60,
-        "DataSyncTimer": 65
-    }
+    with open('MiscFiles/config.json', 'r') as f:
+        config = json.load(f)
+
+    return config
 
 
 def garbageCollection(garbageCollectionTimer, databases: [DatabaseController]):
