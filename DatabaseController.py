@@ -35,6 +35,9 @@ class DatabaseController:
         self._updates = self._stock["updateIndex"]
         self._products = self._stock["products"]
 
+    def getConnectionString(self):
+        return self._connectionString
+
     def getProducts(self, getFilter: Optional[dict] = None) -> [Product]:
         if getFilter is None:
             getFilter = {}
@@ -104,17 +107,16 @@ class DatabaseController:
         if len(args) == 0:
             raise ValueError("You must provide at least one Product to be removed")
 
-        productsToRemoveIds = []
-
         for elem in args:
             if not isinstance(elem, Product):
                 raise TypeError(r'You can remove only products in the "Products" table')
-            productsToRemoveIds.append(elem.getId())
 
         if description is None or not isinstance(description, str):
-            description = f"Deleted products to the database in {datetime.datetime.now()}"
+            description = f"Deleted products in the database in {datetime.datetime.now()}"
 
-        self._products.delete_many({"$or": [{"_id": elem} for elem in productsToRemoveIds]})
+        deleteFilter = {"$or": [elem.toDict() for elem in args]}
+        productsToRemoveIds = [i.getId() for i in self.getProducts(deleteFilter)]
+        self._products.delete_many(deleteFilter)
         self._createUpdate(description, UpdateIndex.TypeDELETE, productsToRemoveIds)
 
     def _deleteById(self, *args):
@@ -187,7 +189,7 @@ class DatabaseController:
                 if elem == dbConString:
                     continue
                 updatesForCurrentDb = DatabaseController._mergeUpdateList(updatesForCurrentDb, taskDict[elem])
-            print()
+
             uselessData = []
             for elem in taskDict[dbConString]:
                 if elem not in updatesForCurrentDb.keys():

@@ -39,7 +39,7 @@ for elem in availableWarehouse:
 
 # Creez niste date random
 database_ready_elems = []
-for i in range(100):
+for i in range(10):
     for elem in availableProducts:
         database_ready_elems.append({"_id": ObjectId(),
                                      "name": f"{elem}{i}",
