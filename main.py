@@ -149,7 +149,8 @@ def dataWrite(databases: [DatabaseController]):
 
         columns = len(dictRaw.keys())
         dictRawLen = len(dictRaw[list(dictRaw.keys())[0]])
-        productsNew = [Product(*[dictRaw[list(dictRaw.keys())[i]][j] for i in range(columns)]) for j in range(dictRawLen)]
+        productsNew = [Product(*[dictRaw[list(dictRaw.keys())[i]][j]
+                                 for i in range(columns)]) for j in range(dictRawLen)]
 
         productsOld = [i.toDict() for i in db.getProducts()]
         for i in productsOld:
