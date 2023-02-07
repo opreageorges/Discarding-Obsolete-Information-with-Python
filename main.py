@@ -206,7 +206,8 @@ def main():
             print("Available command: \n"
                   "s - To stop this application\n"
                   "r - To read data from databases\n"
-                  "w - to write data to databases\n ")
+                  "w - To write data to databases\n "
+                  "fs - To force databases sync\n ")
         else:
             print("Try help for information\n")
     stopThreads.set()
